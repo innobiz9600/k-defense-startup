@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-방산 스타트업 1단계 육성사업 관리시스템</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --navy:#0F3E6E;--navy2:#185FA5;--navy-lt:#E6F1FB;
+    --teal:#0A5C45;--teal2:#0F6E56;--teal-lt:#E1F5EE;
+    --amber:#7A4400;--amber-lt:#FAEEDA;
+    --coral:#7A2A10;--coral-lt:#FAECE7;
+    --purple:#3A2F9E;--purple-lt:#EEEDFE;
+    --gray:#F5F6F8;--border:#E2E6EA;--border2:#C8D0DA;
+    --text:#1A2332;--text2:#4A5568;--text3:#8A96A4;
+    --white:#FFFFFF;--danger:#C0392B;--success:#0A5C45;
+    --sidebar-w:220px;
+  }
+  body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--gray);color:var(--text);font-size:14px;min-height:100vh}
+
+  /* LOGIN */
+  .login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0F3E6E 0%,#185FA5 60%,#0F6E56 100%)}
+  .login-box{background:var(--white);border-radius:16px;padding:40px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+  .login-logo{text-align:center;margin-bottom:28px}
+  .login-logo .kd{font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--navy2);background:var(--navy-lt);padding:4px 10px;border-radius:20px;display:inline-block;margin-bottom:10px}
+  .login-logo h1{font-size:18px;font-weight:700;color:var(--navy);line-height:1.4}
+  .login-logo p{font-size:12px;color:var(--text3);margin-top:4px}
+  .form-group{margin-bottom:14px}
+  .form-group label{font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px}
+  .form-group input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;color:var(--text);outline:none;transition:border-color .2s}
+  .form-group input:focus{border-color:var(--navy2)}
+  .login-btn{width:100%;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;transition:background .2s}
+  .login-btn:hover{background:var(--navy2)}
+  .login-err{color:var(--danger);font-size:12px;margin-top:8px;text-align:center;min-height:18px}
+  .login-hint{font-size:11px;color:var(--text3);text-align:center;margin-top:14px;line-height:1.6}
+
+  /* LAYOUT */
+  .app{display:none;min-height:100vh}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--navy);display:flex;flex-direction:column;z-index:100}
+  .sb-logo{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+  .sb-badge{font-size:10px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:6px}
+  .sb-title{font-size:13px;font-weight:700;color:#fff;line-height:1.4}
+  .sb-period{font-size:10px;color:rgba(255,255,255,.4);margin-top:4px}
+  .sb-nav{flex:1;padding:12px 8px;overflow-y:auto}
+  .sb-section{font-size:10px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.3);padding:12px 8px 6px}
+  .sb-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.65);font-size:13px;transition:all .15s;margin-bottom:2px}
+  .sb-item:hover{background:rgba(255,255,255,.08);color:#fff}
+  .sb-item.active{background:rgba(255,255,255,.15);color:#fff;font-weight:600}
+  .sb-item svg{width:16px;height:16px;flex-shrink:0;opacity:.7}
+  .sb-item.active svg{opacity:1}
+  .sb-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.1)}
+  .sb-user{font-size:11px;color:rgba(255,255,255,.5)}
+  .sb-user span{color:rgba(255,255,255,.8);font-weight:600}
+  .logout-btn{font-size:11px;color:rgba(255,255,255,.4);cursor:pointer;margin-top:4px;background:none;border:none}
+  .logout-btn:hover{color:#fff}
+
+  .main{margin-left:var(--sidebar-w);padding:24px;min-height:100vh}
+  .page{display:none}
+  .page.active{display:block}
+  .page-header{margin-bottom:20px}
+  .page-header h2{font-size:20px;font-weight:700;color:var(--navy)}
+  .page-header p{font-size:13px;color:var(--text3);margin-top:3px}
+
+  /* CARDS */
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+  .stat{background:var(--white);border-radius:12px;padding:16px 18px;border:1px solid var(--border)}
+  .stat-label{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.04em;margin-bottom:6px}
+  .stat-val{font-size:28px;font-weight:700;color:var(--navy);line-height:1}
+  .stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+  .stat.teal .stat-val{color:var(--teal2)}
+  .stat.amber .stat-val{color:#BA7517}
+  .stat.purple .stat-val{color:var(--purple)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:18px 20px}
+  .card-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+  .card-title svg{width:15px;height:15px;color:var(--navy2)}
+
+  /* PHASE PROGRESS */
+  .phase-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .phase-name{font-size:11px;color:var(--text2);width:88px;flex-shrink:0}
+  .phase-bar-bg{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+  .phase-bar-fill{height:100%;border-radius:4px;transition:width .5s}
+  .phase-cnt{font-size:11px;color:var(--text3);width:28px;text-align:right}
+
+  /* TIMELINE */
+  .tl-row{display:flex;gap:6px;align-items:flex-start;margin-bottom:6px}
+  .tl-month{font-size:10px;color:var(--text3);width:26px;flex-shrink:0;padding-top:3px;font-weight:600}
+  .tl-chips{display:flex;flex-wrap:wrap;gap:4px;flex:1}
+  .chip{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500}
+  .chip.bl{background:var(--navy-lt);color:#0C447C}
+  .chip.tl{background:var(--teal-lt);color:#085041}
+  .chip.am{background:var(--amber-lt);color:#633806}
+  .chip.co{background:var(--coral-lt);color:#712B13}
+  .chip.pu{background:var(--purple-lt);color:#3C3489}
+
+  /* TODO */
+  .todo-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;background:var(--gray);margin-bottom:6px}
+  .todo-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+  .todo-dot.urgent{background:#E84B3A}
+  .todo-dot.normal{background:var(--border2)}
+  .todo-text{font-size:12px;color:var(--text);flex:1}
+  .todo-badge{font-size:10px;padding:1px 6px;border-radius:3px;background:var(--amber-lt);color:var(--amber);font-weight:600}
+
+  /* COMPANY LIST */
+  .toolbar{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+  .toolbar input{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);outline:none;width:200px}
+  .toolbar input:focus{border-color:var(--navy2)}
+  .toolbar select{padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;color:var(--text2);outline:none}
+  .btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+  .btn-primary{background:var(--navy);color:#fff}
+  .btn-primary:hover{background:var(--navy2)}
+  .btn-sm{padding:5px 10px;font-size:11px;font-weight:600;border-radius:6px;cursor:pointer;border:none}
+  .btn-outline{background:transparent;border:1.5px solid var(--border2);color:var(--text2)}
+  .btn-outline:hover{border-color:var(--navy2);color:var(--navy2)}
+  .co-cnt{font-size:12px;color:var(--text3);margin-left:auto}
+
+  .co-table{width:100%;border-collapse:collapse;background:var(--white);border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+  .co-table th{background:var(--gray);font-size:11px;font-weight:700;color:var(--text3);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+  .co-table td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+  .co-table tr:last-child td{border-bottom:none}
+  .co-table tr:hover td{background:#F8F9FB}
+  .co-num{font-size:11px;color:var(--text3);font-weight:600}
+  .co-name-cell{font-weight:600;color:var(--navy)}
+  .sec-badge{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600}
+  .phase-badge{font-size:10px;padding:3px 8px;border-radius:5px;font-weight:600;display:inline-flex;align-items:center;gap:3px}
+  .dots-row{display:flex;gap:2px}
+  .step-dot{width:13px;height:13px;border-radius:2px;font-size:7px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .step-dot.done{background:var(--teal-lt);color:#085041}
+  .step-dot.active{background:var(--navy-lt);color:#0C447C}
+  .step-dot.pending{background:var(--border);color:var(--text3)}
+  .action-btns{display:flex;gap:5px}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--white);border-radius:16px;width:580px;max-height:88vh;overflow-y:auto;padding:28px;position:relative}
+  .modal-title{font-size:17px;font-weight:700;color:var(--navy);margin-bottom:20px}
+  .modal-close{position:absolute;right:20px;top:20px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;line-height:1}
+  .modal-close:hover{color:var(--text)}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  .form-row.full{grid-template-columns:1fr}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.03em}
+  .field input,.field select,.field textarea{padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);outline:none;font-family:inherit}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--navy2)}
+  .field textarea{resize:vertical;min-height:70px}
+  .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+
+  /* DETAIL PANEL */
+  .detail-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:150}
+  .detail-overlay.open{display:block}
+  .detail-panel{position:fixed;right:0;top:0;bottom:0;width:420px;background:var(--white);z-index:151;overflow-y:auto;box-shadow:-4px 0 30px rgba(0,0,0,.12);padding:24px}
+  .detail-panel.open{display:block}
+  .dp-close{float:right;background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px}
+  .dp-co-name{font-size:20px;font-weight:700;color:var(--navy);margin-top:4px;margin-bottom:4px}
+  .dp-co-info{font-size:12px;color:var(--text3);margin-bottom:16px}
+  .dp-section{margin-bottom:20px}
+  .dp-section-title{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  .step-list{display:flex;flex-direction:column;gap:6px}
+  .step-item{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:8px;background:var(--gray)}
+  .step-item.active-step{background:var(--navy-lt);border:1px solid #B5D4F4}
+  .step-item.done-step{opacity:.7}
+  .step-icon{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-top:1px}
+  .step-icon.done{background:var(--teal2);color:#fff}
+  .step-icon.active{background:var(--navy2);color:#fff}
+  .step-icon.pending{background:var(--border2);color:var(--text3)}
+  .step-body{flex:1}
+  .step-name{font-size:12px;font-weight:600;color:var(--text)}
+  .step-month{font-size:10px;color:var(--text3);margin-top:1px}
+  .step-outs{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
+  .step-out{font-size:9px;padding:1px 5px;border-radius:3px;background:var(--white);border:1px solid var(--border);color:var(--text2)}
+  .advance-btn{font-size:11px;padding:4px 9px;border:1.5px solid var(--navy2);border-radius:6px;background:var(--white);color:var(--navy2);cursor:pointer;font-weight:600;flex-shrink:0;align-self:center}
+  .advance-btn:hover{background:var(--navy2);color:#fff}
+  .dp-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .dp-info-item{background:var(--gray);border-radius:8px;padding:10px 12px}
+  .dp-info-label{font-size:10px;color:var(--text3);margin-bottom:3px;font-weight:600}
+  .dp-info-val{font-size:12px;color:var(--text);font-weight:500}
+  .memo-box{background:var(--gray);border-radius:8px;padding:12px;font-size:12px;color:var(--text2);min-height:50px;line-height:1.6}
+
+  /* BUDGET */
+  .bud-table{width:100%;border-collapse:collapse}
+  .bud-table th{font-size:11px;font-weight:700;color:var(--text3);padding:8px 12px;text-align:left;background:var(--gray);border-bottom:1px solid var(--border)}
+  .bud-table td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px}
+  .bud-table td:last-child{text-align:right;font-weight:600;color:var(--navy)}
+  .bud-bar-cell{width:120px}
+  .bud-bar-bg{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+  .bud-bar{height:100%;border-radius:3px}
+
+  /* NOTICE */
+  .notice{background:var(--amber-lt);border:1px solid #F0C070;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--amber);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s}
+  .toast.show{transform:translateY(0);opacity:1}
+
+  .empty-state{text-align:center;padding:48px 20px;color:var(--text3)}
+  .empty-state svg{width:40px;height:40px;margin:0 auto 12px;opacity:.3}
+  .empty-state p{font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginPage">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="kd">이노비즈협회</div>
+      <h1>K-방산 스타트업<br>1단계 육성사업</h1>
+      <p>기업 관리 시스템 · 2026</p>
+    </div>
+    <div class="form-group">
+      <label>아이디</label>
+      <input type="text" id="loginId" placeholder="아이디 입력" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="form-group">
+      <label>비밀번호</label>
+      <input type="password" id="loginPw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">로그인</button>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-hint">
+      관리자: admin / innobiz2026<br>
+      팀원: team / kdefense2026
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-badge">이노비즈협회</div>
+      <div class="sb-title">K-방산 스타트업<br>1단계 육성사업</div>
+      <div class="sb-period">2026.05.20 ~ 2026.12.31</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">메뉴</div>
+      <div class="sb-item active" onclick="showPage('dash',this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        대시보드
+      </div>
+      <div class="sb-item" onclick="showPage('companies',this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V12h6v9"/></svg>
+        기업 관리
+        <span id="sb-co-cnt" style="margin-left:auto;background:rgba(255,255,255,.15);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px">0</span>
+      </div>
+      <div class="sb-item" onclick="showPage('schedule',this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        추진 일정
+      </div>
+      <div class="sb-item" onclick="showPage('education',this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3L2 9l10 6 10-6-10-6z"/><path d="M2 17l10 6 10-6"/><path d="M2 13l10 6 10-6"/></svg>
+        교육 관리
+      </div>
+      <div class="sb-item" onclick="showPage('budget',this)">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        예산 현황
+      </div>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user">로그인: <span id="sbUser"></span></div>
+      <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- 대시보드 -->
+    <div class="page active" id="page-dash">
+      <div class="page-header">
+        <h2>대시보드</h2>
+        <p>K-방산 스타트업 1단계 육성사업 전체 현황</p>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-label">총 지원기업</div><div class="stat-val" id="st-total">0</div><div class="stat-sub">/ 15개사 목표</div></div>
+        <div class="stat teal"><div class="stat-label">협약 체결</div><div class="stat-val" id="st-signed">0</div><div class="stat-sub">개사 완료</div></div>
+        <div class="stat amber"><div class="stat-label">기술진단 완료</div><div class="stat-val" id="st-diag">0</div><div class="stat-sub">KTRS + 혁신진단</div></div>
+        <div class="stat purple"><div class="stat-label">컨설팅 진행</div><div class="stat-val" id="st-consult">0</div><div class="stat-sub">개사</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            단계별 진행 현황
+          </div>
+          <div id="phase-bars"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            월별 추진 일정
+          </div>
+          <div id="dash-timeline"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          이번 달 주요 할 일
+        </div>
+        <div id="dash-todos"></div>
+      </div>
+    </div>
+
+    <!-- 기업 관리 -->
+    <div class="page" id="page-companies">
+      <div class="page-header">
+        <h2>기업 관리</h2>
+        <p>선정된 방산 스타트업 현황 및 단계별 진행 관리</p>
+      </div>
+      <div class="toolbar">
+        <input type="text" id="co-search" placeholder="기업명 / 대표자 검색..." oninput="renderCoTable()">
+        <select id="co-sec-filter" onchange="renderCoTable()">
+          <option value="">전체 기술분야</option>
+          <option>AI/SW</option><option>드론/무인</option><option>우주/항공</option>
+          <option>반도체/센서</option><option>로봇/제조</option>
+        </select>
+        <select id="co-phase-filter" onchange="renderCoTable()">
+          <option value="">전체 단계</option>
+          <option value="0">협약 전</option><option value="1">협약 완료</option>
+          <option value="2">기술진단</option><option value="3">방산분석</option>
+          <option value="4">컨설팅</option><option value="5">교육</option>
+          <option value="6">PoC</option><option value="7">IR</option><option value="8">완료</option>
+        </select>
+        <span class="co-cnt" id="co-cnt-label">0개사</span>
+        <button class="btn btn-primary" onclick="openAddModal()">+ 기업 등록</button>
+      </div>
+      <table class="co-table" id="co-table">
+        <thead>
+          <tr>
+            <th style="width:36px">No</th>
+            <th>기업명</th>
+            <th>대표자</th>
+            <th>기술분야</th>
+            <th>담당자</th>
+            <th>진행단계</th>
+            <th>진행현황</th>
+            <th style="width:100px">관리</th>
+          </tr>
+        </thead>
+        <tbody id="co-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- 추진 일정 -->
+    <div class="page" id="page-schedule">
+      <div class="page-header"><h2>추진 일정</h2><p>사업계획서 기반 월별 추진 일정</p></div>
+      <div class="card" id="schedule-card"></div>
+    </div>
+
+    <!-- 교육 관리 -->
+    <div class="page" id="page-education">
+      <div class="page-header"><h2>교육 관리</h2><p>방산 역량강화 교육 — 총 6회 (서울/경기/인천 각 2회)</p></div>
+      <div id="edu-content"></div>
+    </div>
+
+    <!-- 예산 현황 -->
+    <div class="page" id="page-budget">
+      <div class="page-header"><h2>예산 현황</h2><p>총 150,000만원 · 260619 개정 기준</p></div>
+      <div class="notice">⚠ 개정(260619): 시제품 5,500만원/사 · 인건비 25,000만원 · 간접비 164.7만원(회계감사비만)</div>
+      <div id="budget-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 기업 등록/수정 모달 -->
+<div class="modal-overlay" id="coModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-title" id="modal-title">기업 등록</div>
+    <div class="form-row">
+      <div class="field"><label>기업명 *</label><input id="f-name" placeholder="(주)예시기업"></div>
+      <div class="field"><label>대표자 *</label><input id="f-ceo" placeholder="홍길동"></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>연락처</label><input id="f-tel" placeholder="010-0000-0000"></div>
+      <div class="field"><label>이메일</label><input id="f-email" placeholder="ceo@example.com"></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>기술분야 *</label>
+        <select id="f-sec">
+          <option value="">선택</option>
+          <option>AI/SW</option><option>드론/무인</option><option>우주/항공</option>
+          <option>반도체/센서</option><option>로봇/제조</option>
+        </select>
+      </div>
+      <div class="field"><label>주요 제품/기술</label><input id="f-product" placeholder="AI 기반 표적인식 SW"></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>소재지</label>
+        <select id="f-region">
+          <option value="">선택</option>
+          <option>서울</option><option>경기</option><option>인천</option>
+        </select>
+      </div>
+      <div class="field"><label>담당 전문가</label><input id="f-expert" placeholder="이석희 / C&I Global"></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>이노비즈 인증</label>
+        <select id="f-innobiz"><option value="">미보유</option><option>보유</option><option>신청예정</option></select>
+      </div>
+      <div class="field"><label>현재 단계</label>
+        <select id="f-phase">
+          <option value="0">협약 전</option><option value="1">협약 완료</option>
+          <option value="2">기술진단</option><option value="3">방산 적합성 분석</option>
+          <option value="4">컨설팅 진행</option><option value="5">교육 완료</option>
+          <option value="6">PoC/시제품</option><option value="7">방산 IR</option>
+          <option value="8">최종 완료</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row full">
+      <div class="field"><label>메모 / 특이사항</label><textarea id="f-memo" placeholder="기술 특이사항, 컨설팅 진행 현황, 주의사항 등"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveCo()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 기업 상세 패널 -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail()"></div>
+<div class="detail-panel" id="detailPanel" style="display:none">
+  <button class="dp-close" onclick="closeDetail()">×</button>
+  <div style="clear:both"></div>
+  <div id="dp-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const USERS={admin:{pw:'innobiz2026',name:'관리자'},team:{pw:'kdefense2026',name:'팀원'}};
+const PHASES=[
+  {name:'협약 체결',month:'6월',outs:['3자 협약서','NDA']},
+  {name:'기술진단',month:'7월',outs:['KTRS-FM 보고서','혁신진단 보고서','기술수준 분석표']},
+  {name:'방산 적합성 분석',month:'7월',outs:['방산 적합도 분석서','신규 아이템 정의','초기 BM 설계']},
+  {name:'맞춤형 컨설팅',month:'7~11월',outs:['과제기획 로드맵','방산 진입 전략서','GD-KTRS 진단결과']},
+  {name:'방산 기본교육',month:'8~9월',outs:['교육 수료증']},
+  {name:'선행연구 / PoC',month:'9~10월',outs:['선행연구 계획서','기술검증 결과','PoC 결과보고서']},
+  {name:'방산 IR',month:'11월',outs:['IR Deck','체계기업 매칭 결과']},
+  {name:'최종 결과보고',month:'11~12월',outs:['최종 로드맵 보고서','성과 분석서']},
+  {name:'사후지원 (+)',month:"'27.1월",outs:['이노비즈 인증','ISO 인증','2단계 연계']},
+];
+const PHASENAMES=['협약 전','협약 완료','기술진단','방산분석','컨설팅','교육','PoC','IR','완료','사후지원'];
+const PBGS=['#E2E6EA','#E6F1FB','#E6F1FB','#E1F5EE','#E1F5EE','#FAEEDA','#FAECE7','#EEEDFE','#E1F5EE','#F1EFE8'];
+const PFGS=['#8A96A4','#0C447C','#0C447C','#085041','#085041','#633806','#712B13','#3C3489','#085041','#444441'];
+const SECBG={'AI/SW':'#E6F1FB','드론/무인':'#E1F5EE','우주/항공':'#FAEEDA','반도체/센서':'#FAECE7','로봇/제조':'#EEEDFE'};
+const SECFG={'AI/SW':'#0C447C','드론/무인':'#085041','우주/항공':'#633806','반도체/센서':'#712B13','로봇/제조':'#3C3489'};
+const PHASEBAR=['#185FA5','#185FA5','#0F6E56','#0F6E56','#0F6E56','#BA7517','#993C1D','#534AB7','#0F6E56'];
+
+let companies=[];
+let editId=null;
+let currentUser=null;
+
+function loadData(){
+  const d=localStorage.getItem('kdefense_cos');
+  if(d)companies=JSON.parse(d);
+}
+function saveData(){
+  localStorage.setItem('kdefense_cos',JSON.stringify(companies));
+}
+function newId(){return Date.now()+'_'+Math.random().toString(36).slice(2,6)}
+
+function doLogin(){
+  const id=document.getElementById('loginId').value.trim();
+  const pw=document.getElementById('loginPw').value;
+  if(USERS[id]&&USERS[id].pw===pw){
+    currentUser={id,name:USERS[id].name};
+    document.getElementById('loginPage').style.display='none';
+    document.getElementById('app').style.display='flex';
+    document.getElementById('sbUser').textContent=USERS[id].name;
+    loadData();
+    renderAll();
+    document.getElementById('loginErr').textContent='';
+  }else{
+    document.getElementById('loginErr').textContent='아이디 또는 비밀번호가 올바르지 않습니다.';
+  }
+}
+function doLogout(){
+  document.getElementById('loginPage').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginId').value='';
+  document.getElementById('loginPw').value='';
+  currentUser=null;
+}
+
+function showPage(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  el.classList.add('active');
+  closeDetail();
+  if(name==='dash')renderDash();
+  if(name==='companies')renderCoTable();
+  if(name==='schedule')renderSchedule();
+  if(name==='education')renderEdu();
+  if(name==='budget')renderBudget();
+}
+
+function renderAll(){
+  renderDash();renderCoTable();renderSchedule();renderEdu();renderBudget();
+  document.getElementById('sb-co-cnt').textContent=companies.length;
+}
+
+function phSt(co,i){return i<co.phase?'done':i===co.phase?'active':'pending'}
+
+function renderDash(){
+  document.getElementById('st-total').textContent=companies.length;
+  document.getElementById('st-signed').textContent=companies.filter(c=>c.phase>=1).length;
+  document.getElementById('st-diag').textContent=companies.filter(c=>c.phase>=2).length;
+  document.getElementById('st-consult').textContent=companies.filter(c=>c.phase>=4).length;
+  document.getElementById('phase-bars').innerHTML=PHASES.map((p,i)=>{
+    const n=companies.filter(c=>phSt(c,i)!=='pending').length;
+    const tot=companies.length||1;
+    const pct=Math.round(n/tot*100);
+    return`<div class="phase-row">
+      <div class="phase-name">${p.name.length>8?p.name.slice(0,8)+'…':p.name}</div>
+      <div class="phase-bar-bg"><div class="phase-bar-fill" style="width:${pct}%;background:${PHASEBAR[i]}"></div></div>
+      <div class="phase-cnt">${n}/${tot}</div>
+    </div>`;
+  }).join('');
+  const mons=[
+    {m:'6월',items:[{t:'협약 체결',c:'bl'},{t:'NDA 체결',c:'bl'}]},
+    {m:'7월',items:[{t:'KTRS 진단',c:'bl'},{t:'혁신진단',c:'bl'},{t:'방산 적합성',c:'tl'}]},
+    {m:'8월',items:[{t:'교육 1·2차',c:'am'},{t:'컨설팅',c:'tl'}]},
+    {m:'9월',items:[{t:'교육 3~6차',c:'am'},{t:'선행연구',c:'co'}]},
+    {m:'10월',items:[{t:'PoC',c:'co'},{t:'시제품',c:'co'}]},
+    {m:'11월',items:[{t:'방산 IR',c:'pu'},{t:'체계기업 매칭',c:'pu'}]},
+    {m:'12월',items:[{t:'최종보고',c:'bl'},{t:'만족도 조사',c:'bl'}]},
+  ];
+  document.getElementById('dash-timeline').innerHTML=mons.map(m=>`
+    <div class="tl-row"><div class="tl-month">${m.m}</div><div class="tl-chips">${m.items.map(it=>`<span class="chip ${it.c}">${it.t}</span>`).join('')}</div></div>`).join('');
+  const todos=[
+    {t:'15개사 기업 정보 입력 및 DB화',u:true},
+    {t:'3자 협약서 및 NDA 양식 준비',u:true},
+    {t:'KTRS-FM 진단원 5인 배정 확인',u:true},
+    {t:'혁신진단시스템 접속 계정 준비 (400천원×15개사)',u:false},
+    {t:'육성협의체 전문가 12인 매칭 완료',u:false},
+    {t:'시제품 제작비 자부담 안내 (기업당 25%)'},
+  ];
+  document.getElementById('dash-todos').innerHTML=todos.map(t=>`
+    <div class="todo-item">
+      <div class="todo-dot ${t.u?'urgent':'normal'}"></div>
+      <div class="todo-text">${t.t}</div>
+      ${t.u?'<span class="todo-badge">우선</span>':''}
+    </div>`).join('');
+}
+
+function renderCoTable(){
+  const srch=(document.getElementById('co-search').value||'').toLowerCase();
+  const sec=document.getElementById('co-sec-filter').value;
+  const ph=document.getElementById('co-phase-filter').value;
+  let fl=companies.filter(c=>{
+    if(srch&&!c.name.toLowerCase().includes(srch)&&!(c.ceo||'').toLowerCase().includes(srch))return false;
+    if(sec&&c.sec!==sec)return false;
+    if(ph!==''&&String(c.phase)!==ph)return false;
+    return true;
+  });
+  document.getElementById('co-cnt-label').textContent=fl.length+'개사';
+  document.getElementById('sb-co-cnt').textContent=companies.length;
+  const tbody=document.getElementById('co-tbody');
+  if(fl.length===0){
+    tbody.innerHTML=`<tr><td colspan="8"><div class="empty-state"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V12h6v9"/></svg><p>${companies.length===0?'등록된 기업이 없습니다. 우측 상단 "+ 기업 등록" 버튼을 눌러 추가하세요.':'검색 조건에 맞는 기업이 없습니다.'}</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML=fl.map((c,idx)=>{
+    const pname=PHASENAMES[c.phase]||'협약 전';
+    const pbg=PBGS[c.phase]||'#E2E6EA';
+    const pfg=PFGS[c.phase]||'#8A96A4';
+    const sbg=SECBG[c.sec]||'#E2E6EA';
+    const sfg=SECFG[c.sec]||'#666';
+    const dots=PHASES.map((_,i)=>{const s=phSt(c,i);return`<div class="step-dot ${s}" title="${PHASES[i].name}">${s==='done'?'✓':i+1}</div>`;}).join('');
+    return`<tr>
+      <td><span class="co-num">${idx+1}</span></td>
+      <td><span class="co-name-cell">${c.name}</span></td>
+      <td>${c.ceo||'-'}</td>
+      <td><span class="sec-badge" style="background:${sbg};color:${sfg}">${c.sec||'-'}</span></td>
+      <td style="font-size:11px;color:#4A5568">${c.expert||'-'}</td>
+      <td><span class="phase-badge" style="background:${pbg};color:${pfg}">${pname}</span></td>
+      <td><div class="dots-row">${dots}</div></td>
+      <td><div class="action-btns">
+        <button class="btn-sm btn-primary" onclick="openDetail('${c.id}')">상세</button>
+        <button class="btn-sm btn-outline" onclick="openEditModal('${c.id}')">수정</button>
+        <button class="btn-sm" style="background:#FAECE7;color:#993C1D;border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:11px;font-weight:600" onclick="deleteCo('${c.id}')">삭제</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function openAddModal(){
+  editId=null;
+  document.getElementById('modal-title').textContent='기업 등록';
+  ['name','ceo','tel','email','sec','product','region','expert','innobiz','memo'].forEach(f=>{
+    const el=document.getElementById('f-'+f);
+    if(el)el.value='';
+  });
+  document.getElementById('f-phase').value='0';
+  document.getElementById('coModal').classList.add('open');
+}
+function openEditModal(id){
+  editId=id;
+  const co=companies.find(c=>c.id===id);
+  if(!co)return;
+  document.getElementById('modal-title').textContent='기업 정보 수정';
+  document.getElementById('f-name').value=co.name||'';
+  document.getElementById('f-ceo').value=co.ceo||'';
+  document.getElementById('f-tel').value=co.tel||'';
+  document.getElementById('f-email').value=co.email||'';
+  document.getElementById('f-sec').value=co.sec||'';
+  document.getElementById('f-product').value=co.product||'';
+  document.getElementById('f-region').value=co.region||'';
+  document.getElementById('f-expert').value=co.expert||'';
+  document.getElementById('f-innobiz').value=co.innobiz||'';
+  document.getElementById('f-phase').value=String(co.phase||0);
+  document.getElementById('f-memo').value=co.memo||'';
+  document.getElementById('coModal').classList.add('open');
+}
+function closeModal(){document.getElementById('coModal').classList.remove('open');editId=null;}
+function saveCo(){
+  const name=document.getElementById('f-name').value.trim();
+  const sec=document.getElementById('f-sec').value;
+  if(!name){showToast('기업명을 입력하세요');return;}
+  if(!sec){showToast('기술분야를 선택하세요');return;}
+  const data={
+    name,ceo:document.getElementById('f-ceo').value.trim(),
+    tel:document.getElementById('f-tel').value.trim(),
+    email:document.getElementById('f-email').value.trim(),
+    sec,product:document.getElementById('f-product').value.trim(),
+    region:document.getElementById('f-region').value,
+    expert:document.getElementById('f-expert').value.trim(),
+    innobiz:document.getElementById('f-innobiz').value,
+    phase:parseInt(document.getElementById('f-phase').value)||0,
+    memo:document.getElementById('f-memo').value.trim(),
+  };
+  if(editId){
+    const idx=companies.findIndex(c=>c.id===editId);
+    if(idx>=0)companies[idx]={...companies[idx],...data};
+    showToast('수정되었습니다');
+  }else{
+    if(companies.length>=15){showToast('최대 15개사까지 등록 가능합니다');return;}
+    companies.push({id:newId(),...data});
+    showToast('등록되었습니다');
+  }
+  saveData();closeModal();renderCoTable();renderDash();
+}
+function deleteCo(id){
+  if(!confirm('삭제하시겠습니까?'))return;
+  companies=companies.filter(c=>c.id!==id);
+  saveData();renderCoTable();renderDash();closeDetail();showToast('삭제되었습니다');
+}
+
+function openDetail(id){
+  const co=companies.find(c=>c.id===id);
+  if(!co)return;
+  const pbg=PBGS[co.phase]||'#E2E6EA';
+  const pfg=PFGS[co.phase]||'#8A96A4';
+  const steps=PHASES.map((p,i)=>{
+    const st=phSt(co,i);
+    const ic=st==='done'?'✓':st==='active'?'▶':'○';
+    const advBtn=st==='active'?`<button class="advance-btn" onclick="advancePhase('${co.id}',${i})">완료 →</button>`:'';
+    return`<div class="step-item ${st==='active'?'active-step':st==='done'?'done-step':''}">
+      <div class="step-icon ${st}">${ic}</div>
+      <div class="step-body">
+        <div class="step-name">${p.name}</div>
+        <div class="step-month">${p.month}</div>
+        <div class="step-outs">${p.outs.map(o=>`<span class="step-out">${o}</span>`).join('')}</div>
+      </div>
+      ${advBtn}
+    </div>`;
+  }).join('');
+  document.getElementById('dp-content').innerHTML=`
+    <div style="margin-bottom:16px">
+      <span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#8A96A4">기업 상세</span>
+      <div class="dp-co-name">${co.name}</div>
+      <div class="dp-co-info">${co.sec||''} ${co.region?'· '+co.region:''} ${co.ceo?'· 대표 '+co.ceo:''}</div>
+      <span class="phase-badge" style="background:${pbg};color:${pfg}">${PHASENAMES[co.phase]||'협약 전'}</span>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">기본 정보</div>
+      <div class="dp-info-grid">
+        <div class="dp-info-item"><div class="dp-info-label">연락처</div><div class="dp-info-val">${co.tel||'-'}</div></div>
+        <div class="dp-info-item"><div class="dp-info-label">이메일</div><div class="dp-info-val" style="font-size:11px">${co.email||'-'}</div></div>
+        <div class="dp-info-item"><div class="dp-info-label">주요 제품/기술</div><div class="dp-info-val">${co.product||'-'}</div></div>
+        <div class="dp-info-item"><div class="dp-info-label">담당 전문가</div><div class="dp-info-val">${co.expert||'-'}</div></div>
+        <div class="dp-info-item"><div class="dp-info-label">이노비즈 인증</div><div class="dp-info-val">${co.innobiz||'미보유'}</div></div>
+        <div class="dp-info-item"><div class="dp-info-label">소재지</div><div class="dp-info-val">${co.region||'-'}</div></div>
+      </div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">추진 단계 (클릭하여 완료 처리)</div>
+      <div class="step-list">${steps}</div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">메모 / 특이사항</div>
+      <div class="memo-box">${co.memo||'등록된 메모가 없습니다.'}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-outline" style="flex:1;font-size:12px" onclick="openEditModal('${co.id}')">정보 수정</button>
+      <button class="btn btn-primary" style="flex:1;font-size:12px" onclick="deleteCo('${co.id}')">삭제</button>
+    </div>`;
+  document.getElementById('detailOverlay').classList.add('open');
+  document.getElementById('detailPanel').style.display='block';
+}
+function closeDetail(){
+  document.getElementById('detailOverlay').classList.remove('open');
+  document.getElementById('detailPanel').style.display='none';
+}
+function advancePhase(id,phaseIdx){
+  const co=companies.find(c=>c.id===id);
+  if(!co)return;
+  if(co.phase===phaseIdx){
+    co.phase=phaseIdx+1;
+    saveData();openDetail(id);renderCoTable();renderDash();
+    showToast(`"${PHASES[phaseIdx].name}" 완료 처리되었습니다`);
+  }
+}
+
+function renderSchedule(){
+  const rows=[
+    {step:'수정사업계획 · 협약체결',detail:'성과지표 통일, 수정 사업계획서 작성 / 수행기관 협약 체결 및 예산 교부금 신청, RCMS 등록 / 참여기업 모집 공고',month:'5월'},
+    {step:'선정 평가위원회',detail:'스타트업 서면 평가 실시 / 대면평가 대상기업 선별 → 최종 15개사 선정 / 선정기업 협약체결 · 컨설턴트 배정',month:'6월'},
+    {step:'기술력 심층분석',detail:'혁신진단 시스템 및 KTRS 융합 모델 활용 기술 진단 / 기술력 분석에 따른 과제기획 방향 설정',month:'7월'},
+    {step:'과제 기획 컨설팅',detail:'기술 진단 결과 기반 기업 맞춤형 컨설팅 추진 / 3단계 심화 컨설팅으로 방산 과제 도출 / 통일된 산출물 서식으로 기업별 균등 관리',month:'7~11월'},
+    {step:'방산 교육 실시',detail:'국방기술 R&D 사업, 방산 육성지원사업 등 기초 교육 (지역별 2회, 총 6회) — 최소 5회 이상',month:'8~9월'},
+    {step:'진도 점검',detail:'컨설팅 및 교육, 사업 계획의 적정 이행도 확인',month:'8~9월'},
+    {step:'시제품 개발',detail:'컨설팅 결과 기반 방산 모델 개발 및 현장적용 가능성 측정 / PoC 결과 도출 및 최종 성과지표 설정',month:'9~10월'},
+    {step:'방산 IR 개최',detail:'참여기업 맞춤형 방산 전용 IR 추진 (이노웨이브) / 체계기업 초청 통한 실무자 매칭 지원',month:'11월'},
+    {step:'최종 평가위원회',detail:'기업별 KPI 달성도 측정, 시제품 검증 및 현장적용도 확인 / 최종 결과 대면평가 실시',month:'11~12월'},
+    {step:'만족도 조사',detail:'세부 추진 과제별 2단계 연계사업 추진 가능성 확인 / 수요기업 참여 만족도 조사',month:'12월'},
+    {step:'결과 보고',detail:'최종 지원기업 실적 확인 / 결과보고 및 회계 정산',month:'12월'},
+    {step:'사후 관리',detail:'2단계 사업 연계 지원 · 미연계 기업 후속조치',month:"'27.1월"},
+  ];
+  document.getElementById('schedule-card').innerHTML=`
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+        <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#8A96A4;background:#F5F6F8;border-bottom:1px solid #E2E6EA;width:130px">추진 절차</th>
+        <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#8A96A4;background:#F5F6F8;border-bottom:1px solid #E2E6EA">세부 내용</th>
+        <th style="padding:10px 14px;text-align:center;font-size:11px;font-weight:700;color:#8A96A4;background:#F5F6F8;border-bottom:1px solid #E2E6EA;width:70px">일정</th>
+      </tr></thead>
+      <tbody>${rows.map(r=>`<tr>
+        <td style="padding:11px 14px;border-bottom:1px solid #E2E6EA;font-weight:600;font-size:13px;color:#0F3E6E">${r.step}</td>
+        <td style="padding:11px 14px;border-bottom:1px solid #E2E6EA;font-size:12px;color:#4A5568;line-height:1.6">${r.detail}</td>
+        <td style="padding:11px 14px;border-bottom:1px solid #E2E6EA;text-align:center"><span class="chip bl">${r.month}</span></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+}
+
+function renderEdu(){
+  const edu=[
+    {n:1,type:'방산진입 지원제도 및 사업 안내',region:'서울',round:'1차',month:'8월',dur:'8시간 (4+4)',lecturer:'이노비즈협회 + 박수종·김홍유 교수',topics:['방산 진입 구조 이해','국방 지원제도','국방벤처센터 등록'],status:'plan'},
+    {n:2,type:'방산진입 지원제도 및 사업 안내',region:'경기',round:'1차',month:'8월',dur:'8시간 (4+4)',lecturer:'이노비즈협회 + 박수종·김홍유 교수',topics:['방산 진입 구조 이해','국방 지원제도','국방벤처센터 등록'],status:'plan'},
+    {n:3,type:'국방 R&D 연계방안 교육',region:'인천',round:'1차',month:'9월',dur:'8시간',lecturer:'박수종·김홍유 경희대 교수',topics:['국방 획득 개요','방산 PM','참여제안서 작성법'],status:'plan'},
+    {n:4,type:'방산진입 지원제도 및 사업 안내',region:'서울',round:'2차',month:'9월',dur:'8시간 (4+4)',lecturer:'이노비즈협회 + 박수종·김홍유 교수',topics:['방산 진입 구조 이해','국방 지원제도'],status:'plan'},
+    {n:5,type:'국방 R&D 연계방안 교육',region:'경기',round:'2차',month:'9월',dur:'8시간',lecturer:'박수종·김홍유 경희대 교수',topics:['국방 획득 개요','방산 PM'],status:'plan'},
+    {n:6,type:'국방 R&D 연계방안 교육',region:'인천',round:'2차',month:'9월',dur:'8시간',lecturer:'박수종·김홍유 경희대 교수',topics:['국방 획득 개요','방산 PM'],status:'plan'},
+  ];
+  const stLabel={plan:'예정',done:'완료',active:'진행중'};
+  const stBg={plan:'#E2E6EA',done:'#E1F5EE',active:'#E6F1FB'};
+  const stFg={plan:'#4A5568',done:'#085041',active:'#0C447C'};
+  document.getElementById('edu-content').innerHTML=`
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">교육 일정 (총 6회 · 최소 5회 이상)</div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr>
+          <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#8A96A4;background:#F5F6F8;border-bottom:1px solid #E2E6EA;text-align:left;width:28px">회차</th>
+          <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#8A96A4;background:#F5F6F8;border-bottom:1px solid #E2E6EA;text-align:left">교육명</th>
+          <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#8A96A4;background:#F5F6F8;border-bottom:1px solid #E2E6EA;text-align:left;width:50px">지역</th>
+          <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#8A96A4;background:#F5F6F8;border-bottom:1px solid #E2E6EA;text-align:left;width:50px">일정</th>
+          <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#8A96A4;background:#F5F6F8;border-bottom:1px solid #E2E6EA;text-align:left">강사</th>
+          <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#8A96A4;background:#F5F6F8;border-bottom:1px solid #E2E6EA;text-align:left">주요 내용</th>
+          <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#8A96A4;background:#F5F6F8;border-bottom:1px solid #E2E6EA;text-align:center;width:50px">상태</th>
+        </tr></thead>
+        <tbody>${edu.map(e=>`<tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #E2E6EA;font-size:12px;font-weight:700;color:#185FA5;text-align:center">${e.n}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #E2E6EA;font-size:12px;font-weight:600;color:#1A2332">${e.type} (${e.region} ${e.round})</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #E2E6EA"><span class="chip bl">${e.region}</span></td>
+          <td style="padding:10px 12px;border-bottom:1px solid #E2E6EA;font-size:12px;color:#4A5568">${e.month}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #E2E6EA;font-size:11px;color:#4A5568">${e.lecturer}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #E2E6EA">${e.topics.map(t=>`<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#F5F6F8;color:#4A5568;margin-right:3px">${t}</span>`).join('')}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid #E2E6EA;text-align:center"><span style="font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600;background:${stBg[e.status]};color:${stFg[e.status]}">${stLabel[e.status]}</span></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="card-title">교육비 예산</div>
+        <table class="bud-table">
+          <tr><td>방산교육 강사비</td><td class="bud-bar-cell"><div class="bud-bar-bg"><div class="bud-bar" style="width:65%;background:#185FA5"></div></div></td><td>1,440만원</td></tr>
+          <tr><td style="font-size:11px;color:#4A5568">400천원×3시간×2회×6번</td><td></td><td></td></tr>
+          <tr><td>강의교안 제작비</td><td></td><td>200만원</td></tr>
+          <tr><td>교육장 임차료</td><td class="bud-bar-cell"><div class="bud-bar-bg"><div class="bud-bar" style="width:27%;background:#185FA5"></div></div></td><td>600만원</td></tr>
+          <tr><td style="font-size:11px;color:#4A5568">1,000천원×6회</td><td></td><td></td></tr>
+          <tr style="background:#F5F6F8"><td colspan="2" style="font-weight:700;font-size:12px;color:#0F3E6E">합계</td><td>2,240만원</td></tr>
+        </table>
+      </div>
+      <div class="card"><div class="card-title">교육 성과 목표</div>
+        <div class="stat-grid" style="grid-template-columns:1fr 1fr">
+          <div class="stat"><div class="stat-label">목표</div><div class="stat-val" style="font-size:22px">6회</div></div>
+          <div class="stat"><div class="stat-label">최소 기준</div><div class="stat-val" style="font-size:22px">5회</div></div>
+          <div class="stat"><div class="stat-label">집중 기간</div><div class="stat-val" style="font-size:18px">8~9월</div></div>
+          <div class="stat teal"><div class="stat-label">대상</div><div class="stat-val" style="font-size:18px">15개사</div></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderBudget(){
+  document.getElementById('budget-content').innerHTML=`
+    <div class="stat-grid" style="margin-bottom:16px">
+      <div class="stat"><div class="stat-label">총 사업비</div><div class="stat-val" style="font-size:22px">150,000</div><div class="stat-sub">만원</div></div>
+      <div class="stat teal"><div class="stat-label">직접비</div><div class="stat-val" style="font-size:22px">149,835</div><div class="stat-sub">만원 (99.9%)</div></div>
+      <div class="stat"><div class="stat-label">간접비</div><div class="stat-val" style="font-size:22px">164.7</div><div class="stat-sub">만원 (회계감사비)</div></div>
+      <div class="stat amber"><div class="stat-label">기업당 시제품</div><div class="stat-val" style="font-size:22px">5,500</div><div class="stat-sub">만원 (75% 정부지원)</div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="card-title">인건비 명세 (25,000만원)</div>
+        <table class="bud-table">
+          <tr><th>성명/직위</th><th>참여율</th><th>기간</th><th>금액</th></tr>
+          ${[['백규민 부장','68%','7.4','4,321'],['김정석 팀장','80%','7.4','4,033'],['박영철 부장','80%','7.4','4,319'],['남윤정 차장','80%','7.4','3,371'],['이현지 과장','85%','7.4','3,020'],['권나현 과장','75%','7.4','2,386'],['박찬숙 대리','3%','7.4','81'],['김선우 대리','67%','7.4','1,862'],['용승환 주임','68%','7.4','1,606']].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}개월</td><td>${r[3]}만원</td></tr>`).join('')}
+          <tr style="background:#F5F6F8"><td colspan="3" style="font-weight:700;color:#0F3E6E">합계</td><td>25,000만원</td></tr>
+        </table>
+      </div>
+      <div class="card"><div class="card-title">비목별 예산 구성</div>
+        <table class="bud-table">
+          <tr><th>비목</th><th></th><th>금액</th></tr>
+          <tr><td>인건비</td><td class="bud-bar-cell"><div class="bud-bar-bg"><div class="bud-bar" style="width:17%;background:#185FA5"></div></div></td><td>25,000만원</td></tr>
+          <tr><td>시제품 제작비</td><td class="bud-bar-cell"><div class="bud-bar-bg"><div class="bud-bar" style="width:55%;background:#993C1D"></div></div></td><td>82,500만원</td></tr>
+          <tr><td>시험·성능·평가</td><td class="bud-bar-cell"><div class="bud-bar-bg"><div class="bud-bar" style="width:3%;background:#993C1D"></div></div></td><td>4,950만원</td></tr>
+          <tr><td>과제기획 컨설팅</td><td class="bud-bar-cell"><div class="bud-bar-bg"><div class="bud-bar" style="width:20%;background:#534AB7"></div></div></td><td>29,700만원</td></tr>
+          <tr><td>추가컨설팅·교육 등</td><td class="bud-bar-cell"><div class="bud-bar-bg"><div class="bud-bar" style="width:5%;background:#534AB7"></div></div></td><td>7,635만원</td></tr>
+          <tr><td>간접비 (회계감사)</td><td></td><td>164.7만원</td></tr>
+          <tr style="background:#F5F6F8"><td colspan="2" style="font-weight:700;color:#0F3E6E">합계</td><td>150,000만원</td></tr>
+        </table>
+      </div>
+    </div>`;
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>
